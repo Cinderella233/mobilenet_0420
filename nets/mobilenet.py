@@ -23,7 +23,7 @@ class ConvBNReLU(nn.Sequential):
     def __init__(self, in_planes, out_planes, kernel_size=3, stride=1, groups=1):
         padding = (kernel_size - 1) // 2
         super(ConvBNReLU, self).__init__(
-            nn.Conv2d(in_planes, out_planes, kernel_size, stride, padding, groups=groups, bias=False),
+            Conv2dFix(in_planes, out_planes, kernel_size, stride, padding, groups=groups, bias=False),
             nn.BatchNorm2d(out_planes),
             nn.ReLU6(inplace=True)
         )
@@ -42,7 +42,7 @@ class InvertedResidual(nn.Module):
             layers.append(ConvBNReLU(inp, hidden_dim, kernel_size=1))
         layers.extend([
             ConvBNReLU(hidden_dim, hidden_dim, stride=stride, groups=hidden_dim),
-            nn.Conv2d(hidden_dim, oup, 1, 1, 0, bias=False),
+            Conv2dFix(hidden_dim, oup, 1, 1, 0, bias=False),
             nn.BatchNorm2d(oup),
         ])
         self.conv = nn.Sequential(*layers)
@@ -66,16 +66,16 @@ class SkipBlock(nn.Module):
 
         self.core_block = nn.Sequential(
             # pw
-            nn.Conv2d(inp, hidden_dim, 1, 1, 0, bias=False),
+            Conv2dFix(inp, hidden_dim, 1, 1, 0, bias=False),
             nn.BatchNorm2d(hidden_dim),
             nn.ReLU(inplace=True),
             # dw
-            nn.Conv2d(hidden_dim, hidden_dim, kernel_size, stride, (kernel_size - 1) // 2, groups=hidden_dim, bias=False),
+            Conv2dFix(hidden_dim, hidden_dim, kernel_size, stride, (kernel_size - 1) // 2, groups=hidden_dim, bias=False),
             nn.BatchNorm2d(hidden_dim),
             nn.ReLU(inplace=True),
 
             # pw-linear
-            nn.Conv2d(hidden_dim, out, 1, 1, 0, bias=False),
+            Conv2dFix(hidden_dim, out, 1, 1, 0, bias=False),
             nn.BatchNorm2d(out),
         )
 
@@ -88,7 +88,7 @@ class SkipBlock(nn.Module):
 
 
 class MobileNetV2(nn.Module):
-    def __init__(self,num_classes=100, width_mult=1.0, inverted_residual_setting=None, round_nearest=8):
+    def __init__(self,num_classes=1000, width_mult=1.0, inverted_residual_setting=None, round_nearest=8):
         super(MobileNetV2, self).__init__()
         block = InvertedResidual
         input_channel = 32
@@ -179,7 +179,7 @@ class MobileNetV2(nn.Module):
         )
 
         for m in self.modules():
-            if isinstance(m, nn.Conv2d):
+            if isinstance(m, Conv2dFix):
                 nn.init.kaiming_normal_(m.weight, mode='fan_out')
                 if m.bias is not None:
                     nn.init.zeros_(m.bias)
@@ -322,7 +322,7 @@ class quantize(torch.autograd.Function):
 
 
 
-def mobilenet_v2(pretrained=False, progress=True, num_classes=100):
+def mobilenet_v2(pretrained=False, progress=True, num_classes=1000):
     model = MobileNetV2()
     if pretrained:
         state_dict = load_state_dict_from_url(model_urls['mobilenet_v2'], model_dir="model_data",
