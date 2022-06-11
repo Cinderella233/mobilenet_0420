@@ -55,9 +55,9 @@ class InvertedResidual(nn.Module):
             return self.conv(x)
 
 
-class InvertedResidualHalf(nn.Module):
+class InvertedResidualquartern(nn.Module):
     def __init__(self, inp, oup, stride, expand_ratio, hidden_dim = None):
-        super(InvertedResidualHalf, self).__init__()
+        super(InvertedResidualquartern, self).__init__()
         assert stride in [1, 2]
 
         if hidden_dim is None:
@@ -334,8 +334,8 @@ class SkipBlockFull(nn.Module):
         out = self.r1(self.bn1(self.conv1(x)))
 
         #out1, out2 = out.chunk(2,1)
-        out1 = self.r2(self.bn2_h(self.conv2_h(out1)))
-        out2 = self.r2(self.bn2_v(self.conv2_v(out2)))
+        out1 = self.r2(self.bn2_h(self.conv2_h(out)))
+        out2 = self.r2(self.bn2_v(self.conv2_v(out)))
         out = torch.cat([out1, out2], 1)
 
         out = self.bn3(self.conv3(out))
