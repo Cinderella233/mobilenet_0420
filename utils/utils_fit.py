@@ -76,6 +76,7 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_step
             optimizer.zero_grad()
             outputs     = model_train(images)
             loss_value = criterion(features=images, output=outputs, target=targets)
+#             loss_value  = nn.CrossEntropyLoss()(outputs, targets)
             loss_value.backward()
             optimizer.step()
             # print(model.state_dict())
@@ -109,6 +110,7 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_step
 
                 outputs     = model_train(images)
                 loss_value = criterion(features=images, output=outputs, target=targets)
+#                 loss_value  = nn.CrossEntropyLoss()(outputs, targets)
                 
                 val_loss    += loss_value.item()
                 accuracy        = torch.mean((torch.argmax(F.softmax(outputs, dim=-1), dim=-1) == targets).type(torch.FloatTensor))
