@@ -366,30 +366,10 @@ class Net(nn.Module):
             [cfg[2], 6, cfg[10], 3, 1, 14],
         ]
         self.cfgs_skipblocks = cfgs_skip
-
-        if inverted_residual_setting is None:
-            inverted_residual_setting = [
-                # t, c, n, s , m
-                # 112, 112, 32 -> 112, 112, 16
-                [1, 16, 1, 1, True],
-                # 112, 112, 16 -> 56, 56, 24
-                [6, 24, 1, 2, False],
-                # 56, 56, 24 -> 28, 28, 32
-                [6, 32, 1, 2, True],
-                # 28, 28, 32 -> 14, 14, 64
-                [6, 64, 1, 2, False],
-                # 14, 14, 64 -> 14, 14, 96
-                [6, 96, 1, 1, True],
-                # 14, 14, 96 -> 7, 7, 160
-                [6, 160, 1, 2, False],
-                # 7, 7, 160 -> 7, 7, 320
-                [6, 320, 1, 1, True],
-            ]
-
             
          self.model1 = nn.Sequential(
             ConvBNReLU(3, cfg[0], stride=2),
-            block(cfg[0], cfg[2], stride=2, expand_ratio=6,hidden_dim=cfg[1])
+            block(cfg[0], cfg[2], stride=1, expand_ratio=6,hidden_dim=cfg[1])
         )
 
         self.model2 = nn.Sequential(
