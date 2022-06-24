@@ -42,7 +42,7 @@ class InvertedResidual(nn.Module):
         if expand_ratio != 1:
             layers.append(ConvBNReLU(inp, hidden_dim, kernel_size=1))
         layers.extend([
-            ConvBNReLU(hidden_dim, hidden_dim, stride=stride, groups=hidden_dim),
+            ConvBNReLU(hidden_dim, hidden_dim, stride=stride, groups=1),
             nn.Conv2d(hidden_dim, oup, 1, 1, 0, bias=False),
             nn.BatchNorm2d(oup),
         ])
