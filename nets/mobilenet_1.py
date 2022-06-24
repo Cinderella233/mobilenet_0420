@@ -102,6 +102,59 @@ class InvertedResidualquartern(nn.Module):
             return out
 
 
+class InvertedResidualonesixth(nn.Module):
+    def __init__(self, inp, oup, stride, expand_ratio, hidden_dim = None):
+        super(InvertedResidualonesixth, self).__init__()
+        assert stride in [1, 2]
+
+        if hidden_dim is None:
+            hidden_dim = int(round(inp * expand_ratio))
+        self.identity = stride == 1 and inp == oup
+        self.expand_ratio = expand_ratio
+
+        self.conv1 = nn.Conv2d(inp, hidden_dim, 1, 1, 0, bias=False)
+        self.bn1   = nn.BatchNorm2d(hidden_dim)
+        self.r1    = nn.ReLU6(inplace=True)
+
+        self.conv2_h = nn.Conv2d(hidden_dim//6, hidden_dim//6, (1,3), stride, (0,1), groups=1, bias=False)
+        self.bn2_h   = nn.BatchNorm2d(hidden_dim//6)
+        self.conv2_v = nn.Conv2d(hidden_dim//6, hidden_dim//6, (3,1), stride, (1,0), groups=1, bias=False)
+        self.bn2_v   = nn.BatchNorm2d(hidden_dim//6)
+        self.conv2_h1 = nn.Conv2d(hidden_dim//6, hidden_dim//6, (1,3), stride, (0,1), groups=1, bias=False)
+        self.bn2_h1   = nn.BatchNorm2d(hidden_dim//6)
+        self.conv2_v1 = nn.Conv2d(hidden_dim//6, hidden_dim//6, (3,1), stride, (1,0), groups=1, bias=False)
+        self.bn2_v1   = nn.BatchNorm2d(hidden_dim//6)
+        self.conv2_h2 = nn.Conv2d(hidden_dim//6, hidden_dim//6, (1,3), stride, (0,1), groups=1, bias=False)
+        self.bn2_h2   = nn.BatchNorm2d(hidden_dim//6)
+        self.conv2_v2 = nn.Conv2d(hidden_dim//6, hidden_dim//6, (3,1), stride, (1,0), groups=1, bias=False)
+        self.bn2_v2   = nn.BatchNorm2d(hidden_dim//6)
+        self.r2    = nn.ReLU6(inplace=True)
+
+        self.conv3 = nn.Conv2d(hidden_dim, oup, 1, 1, 0, bias=False)
+        self.bn3   = nn.BatchNorm2d(oup)
+
+    def forward(self, x):
+        if self.expand_ratio == 1:
+            out = x
+        else: 
+            out = self.r1(self.bn1(self.conv1(x)))
+
+        out1, out2, out3, out4, out5, out6  = out.chunk(6,1)
+        out1 = self.r2(self.bn2_h(self.conv2_h(out1)))
+        out2 = self.r2(self.bn2_v(self.conv2_v(out2)))
+        out3 = self.r2(self.bn2_h1(self.conv2_h1(out3)))
+        out4 = self.r2(self.bn2_v1(self.conv2_v1(out4)))  
+        out5 = self.r2(self.bn2_h2(self.conv2_h2(out5)))
+        out6 = self.r2(self.bn2_v2(self.conv2_v2(out6)))  
+        out = torch.cat([out1, out2,out3, out4,out5,out6], 1)
+
+        out = self.bn3(self.conv3(out))
+        if self.identity:
+            return x + out
+        else:
+            return out
+        
+        
 class InvertedResidualHalf(nn.Module):
     def __init__(self, inp, oup, stride, expand_ratio, hidden_dim = None):
         super(InvertedResidualHalf, self).__init__()
@@ -349,14 +402,17 @@ class SkipBlockFull(nn.Module):
 class Net(nn.Module):
     def __init__(self,cfg=None,num_classes=1000, width_mult=1.0, inverted_residual_setting=None, round_nearest=8):
         super(Net, self).__init__()
-        block = InvertedResidualHalf
+        block_2 = InvertedResidualHalf
+        block_4 = InvertedResidualquartern
+        block_6 = InvertedResidualonesixth
+        
         input_channel = 32
         last_channel = 1280
 
 
         self.blocks = nn.ModuleList([])
         # building inverted residual and skip blocks
-        block_skip = SkipBlock
+        block_skip = SkipBlockquartern
         cfg = [ 32, 32, 16, 96, 24, 144, 32, 192, 64 , 384, 96,576, 160,960,320] 
   
   
@@ -369,22 +425,22 @@ class Net(nn.Module):
             
         self.model1 = nn.Sequential(
             ConvBNReLU(3, cfg[0], stride=2),
-            block(cfg[0], cfg[2], stride=1, expand_ratio=1,hidden_dim=cfg[1])
+            block_2(cfg[0], cfg[2], stride=1, expand_ratio=1,hidden_dim=cfg[1])
         )
 
         self.model2 = nn.Sequential(
-            block(cfg[2], cfg[4], stride=2, expand_ratio=6,hidden_dim=cfg[3]),
-            block(cfg[4], cfg[6], stride=2, expand_ratio=6,hidden_dim=cfg[5])
+            block_4(cfg[2], cfg[4], stride=2, expand_ratio=6,hidden_dim=cfg[3]),
+            block_4(cfg[4], cfg[6], stride=2, expand_ratio=6,hidden_dim=cfg[5])
         )
 
         self.model3 = nn.Sequential(
-            block(cfg[6], cfg[8], stride=2, expand_ratio=6,hidden_dim=cfg[7]),
-            block(cfg[8], cfg[10], stride=1, expand_ratio=6,hidden_dim=cfg[9])
+            block_6(cfg[6], cfg[8], stride=2, expand_ratio=6,hidden_dim=cfg[7]),
+            block_6(cfg[8], cfg[10], stride=1, expand_ratio=6,hidden_dim=cfg[9])
         )
 
         self.model4 = nn.Sequential(
-            block(cfg[10], cfg[12], stride=2, expand_ratio=6,hidden_dim=cfg[11]),
-            block(cfg[12], cfg[14], stride=1, expand_ratio=6,hidden_dim=cfg[13]),
+            block_6(cfg[10], cfg[12], stride=2, expand_ratio=6,hidden_dim=cfg[11]),
+            block_6(cfg[12], cfg[14], stride=1, expand_ratio=6,hidden_dim=cfg[13]),
             ConvBNReLU(cfg[14], 1280, kernel_size=1)
         )
 
