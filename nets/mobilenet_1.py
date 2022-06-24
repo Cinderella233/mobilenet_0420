@@ -369,7 +369,7 @@ class Net(nn.Module):
             
         self.model1 = nn.Sequential(
             ConvBNReLU(3, cfg[0], stride=2),
-            block(cfg[0], cfg[2], stride=1, expand_ratio=6,hidden_dim=cfg[1])
+            block(cfg[0], cfg[2], stride=1, expand_ratio=1,hidden_dim=cfg[1])
         )
 
         self.model2 = nn.Sequential(
