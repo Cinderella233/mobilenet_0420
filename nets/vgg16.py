@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 from torch.hub import load_state_dict_from_url
 
-model_urls = {
-    'vgg16': 'https://download.pytorch.org/models/vgg16-397923af.pth',
-}
+# model_urls = {
+#     'vgg16': 'https://download.pytorch.org/models/vgg16-397923af.pth',
+# }
 
 
 class VGG(nn.Module):
@@ -71,15 +71,15 @@ def make_layers(cfg, batch_norm=False):
 # 224,224,3 -> 224,224,64 -> 112,112,64 -> 112,112,128 -> 56,56,128 -> 56,56,256 -> 28,28,256 -> 28,28,512
 # 14,14,512 -> 14,14,512 -> 7,7,512
 cfgs = {
-    'D': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 512, 512, 512, 'M', 512, 512, 512, 'M'],
+    'D': [64, 'M', 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M'],
 }
 
 def vgg16(pretrained=False, progress=True, num_classes=1000):
     model = VGG(make_layers(cfgs['D']))
-    if pretrained:
-        state_dict = load_state_dict_from_url(model_urls['vgg16'], model_dir='./model_data',
-                                              progress=progress)
-        model.load_state_dict(state_dict,strict=False)
+#     if pretrained:
+#         state_dict = load_state_dict_from_url(model_urls['vgg16'], model_dir='./model_data',
+#                                               progress=progress)
+#         model.load_state_dict(state_dict,strict=False)
 
     if num_classes!=1000:
         model.classifier =  nn.Sequential(
